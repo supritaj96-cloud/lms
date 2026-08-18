@@ -1,21 +1,28 @@
 import React, { useContext, useEffect, useRef, useState } from 'react'
-import uniqid from 'uniqid';
 import Quill from 'quill';
 import { assets } from '../../assets/LMS_assets/assets/assets';
 
 import { AppContext } from "../../context/AppContext";
+import { useNavigate, useParams } from 'react-router-dom';
 
 const AddCourse = () => {
+
+  const createId = () => crypto.randomUUID();
 
   const quillRef = useRef(null);
   const editorRef = useRef(null);
 
-  const { getToken } = useContext(AppContext);
+  const { getToken, request, fetchAllCourses } = useContext(AppContext);
+  const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = Boolean(id);
 
   const [courseTitle, setCourseTitle] = useState('');
   const [courseDescription, setCourseDescription] = useState('');
   const [coursePrice, setCoursePrice] = useState(0);
   const [discount, setDiscount] = useState(0);
+  const [category, setCategory] = useState('General');
+  const [isPublished, setIsPublished] = useState(false);
   const [image, setImage] = useState(null);
 
   const [chapters, setChapters] = useState([]);
@@ -60,6 +67,29 @@ const AddCourse = () => {
 
   },[]);
 
+  useEffect(() => {
+    const loadCourse = async () => {
+      if (!isEditing) return
+      try {
+        const token = await getToken()
+        const data = await request(`/api/educator/courses/${id}`, { token })
+        const course = data.course
+        setCourseTitle(course.courseTitle)
+        setCourseDescription(course.courseDescription)
+        setCoursePrice(course.coursePrice)
+        setDiscount(course.discount)
+        setCategory(course.category || 'General')
+        setIsPublished(course.isPublished)
+        setChapters(course.courseContent.map((chapter) => ({ ...chapter, collapsed: false })))
+        if (quillRef.current) quillRef.current.root.innerHTML = course.courseDescription
+      } catch (error) {
+        alert(error.message)
+        navigate('/educator/my-courses')
+      }
+    }
+    loadCourse()
+  }, [id])
+
 
 
   // Add Course API
@@ -79,7 +109,9 @@ const AddCourse = () => {
 
         discount:Number(discount),
 
-        chapters
+        courseContent: chapters,
+        category,
+        isPublished
 
       };
 
@@ -94,66 +126,38 @@ const AddCourse = () => {
       );
 
 
-      formData.append(
-        "image",
-        image
-      );
+      if (image) formData.append("image", image);
 
 
 
       const token = await getToken();
 
-console.log(token);
+      if (!token) throw new Error('Please sign in again')
+      if (!isEditing && !image) throw new Error('Please attach a course thumbnail')
+      if (!courseTitle.trim() || !courseDescription.trim()) throw new Error('Course title and description are required')
 
-if (!token) {
-  alert("Token is null");
-  return;
-}
-      
+      await request(isEditing ? `/api/educator/courses/${id}` : '/api/educator/add-course', {
+        method: isEditing ? 'PUT' : 'POST', token, body: formData
+      })
 
-const response = await fetch(
-  "http://localhost:5000/api/educator/add-course",
-  {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: formData,
-  }
-);
+      await fetchAllCourses()
 
-
-
-      const data = await response.json();
-
-
-      console.log(data);
-
-
-      if(data.success){
-
-        alert("Course Added Successfully");
+      alert(isEditing ? 'Course updated successfully' : 'Course added successfully');
 
 
         setCourseTitle('');
         setCourseDescription('');
         setCoursePrice(0);
         setDiscount(0);
+        setCategory('General');
+        setIsPublished(false);
         setImage(null);
         setChapters([]);
-
-      }
-      else{
-
-        alert(data.message);
-
-      }
+        navigate('/educator/my-courses')
 
 
     }
     catch(error){
-
-      console.log(error);
 
       alert(error.message);
 
@@ -177,7 +181,7 @@ const response = await fetch(
 
         const newChapter={
 
-          chapterId:uniqid(),
+          chapterId:createId(),
 
           chapterTitle:title,
 
@@ -215,6 +219,14 @@ const response = await fetch(
         )
       )
 
+    }
+
+    else if (action === 'rename') {
+      const chapter = chapters.find((item) => item.chapterId === chapterId)
+      const title = prompt('Enter Chapter Name:', chapter?.chapterTitle || '')
+      if (title?.trim()) {
+        setChapters(chapters.map((item) => item.chapterId === chapterId ? { ...item, chapterTitle: title.trim() } : item))
+      }
     }
 
 
@@ -295,6 +307,23 @@ const response = await fetch(
 
   }
 
+  else if (action === 'edit') {
+    const chapter = chapters.find((item) => item.chapterId === chapterId)
+    const lecture = chapter?.chapterContent[lectureIndex]
+    if (!lecture) return
+    const lectureTitle = prompt('Lecture title:', lecture.lectureTitle)
+    if (lectureTitle === null || !lectureTitle.trim()) return
+    const lectureDuration = prompt('Duration (minutes):', lecture.lectureDuration)
+    const lectureUrl = prompt('Lecture URL:', lecture.lectureUrl)
+    if (lectureDuration === null || lectureUrl === null) return
+    setChapters(chapters.map((item) => item.chapterId === chapterId ? {
+      ...item,
+      chapterContent: item.chapterContent.map((current, index) => index === lectureIndex ? {
+        ...current, lectureTitle: lectureTitle.trim(), lectureDuration: Number(lectureDuration), lectureUrl: lectureUrl.trim()
+      } : current)
+    } : item))
+  }
+
 
 };
 
@@ -306,6 +335,8 @@ return (
 
 
 <form>
+
+<h1 className='text-xl font-semibold mb-4'>{isEditing ? 'Edit Course' : 'Add Course'}</h1>
 
 
 <div className='flex flex-col gap-1'>
@@ -371,6 +402,11 @@ required
 
 </div>
 
+<div className='flex flex-col gap-1 mt-4'>
+<p>Category</p>
+<input onChange={e => setCategory(e.target.value)} value={category} type="text" placeholder="e.g. Development" className='outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500' />
+</div>
+
 
 
 
@@ -434,6 +470,11 @@ alt=""
 
 
 </div>
+
+<label className='flex items-center gap-2 mt-4 cursor-pointer'>
+  <input type="checkbox" checked={isPublished} onChange={e => setIsPublished(e.target.checked)} />
+  Publish this course now
+</label>
 
 
 </div>
@@ -526,6 +567,8 @@ alt=""
 
 </span>
 
+<button type="button" onClick={() => handleChapter('rename', chapter.chapterId)} className='ml-3 text-xs text-blue-600'>Rename</button>
+
 
 </div>
 
@@ -556,7 +599,6 @@ className='cursor-pointer'
 alt=""
 
 />
-
 
 </div>
 
@@ -624,6 +666,8 @@ lecture.isPreviewFree
 
 
 </span>
+
+<button type="button" onClick={() => handleLecture('edit', chapter.chapterId, index)} className='text-xs text-blue-600 ml-auto mr-3'>Edit</button>
 
 
 
@@ -837,7 +881,7 @@ chapterContent:[
 
 ...chapter.chapterContent,
 
-lectureDetails
+{ ...lectureDetails, lectureId: createId() }
 
 ]
 

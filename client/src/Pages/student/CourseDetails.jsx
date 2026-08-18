@@ -6,6 +6,7 @@ import { assets } from '../../assets/LMS_assets/assets/assets'
 import humanizeDuration from 'humanize-duration'
 import Footer from '../../Components/student/Footer'
 import YouTube from 'react-youtube'
+import { useClerk } from '@clerk/clerk-react'
 
 
 
@@ -17,20 +18,52 @@ const CourseDetails = () => {
   const [openSections, setOpenSections] = useState({})
   const [isAlreadyEnrolled, setIsAlreadyEnrolled] = useState(false)
   const [playerData, setPlayerData] = useState(null)
+  const [error, setError] = useState('')
+  const { openSignIn } = useClerk()
 
 
 
 
-  const {allCourses, calculateRating, calculateNoOfLectures, calculateCourseDuration, calculateChapterTime, currency} = useContext(AppContext)
+  const {calculateRating, calculateNoOfLectures, calculateCourseDuration, calculateChapterTime, currency, getToken, request, user, userData, fetchUserData, fetchUserEnrolledCourses} = useContext(AppContext)
 
   const fetchCourseData = async ()=>{
-    const findCourse = allCourses.find(course => course._id === id)
-    setCourseData(findCourse);
+    try {
+      setError('')
+      const data = await request(`/api/course/${id}`)
+      setCourseData(data.courseData)
+    } catch (error) {
+      setError(error.message)
+      setCourseData(null)
+    }
   }
 
   useEffect(()=>{
     fetchCourseData()
-  }, [allCourses])
+  }, [id])
+
+  useEffect(() => {
+    setIsAlreadyEnrolled(Boolean(userData?.enrolledCourses?.some((courseId) => courseId.toString() === id)))
+  }, [userData, id])
+
+  const enrollCourse = async () => {
+    if (!user) return openSignIn()
+    try {
+      const token = await getToken()
+      const data = await request('/api/payment/checkout', {
+        method: 'POST', token,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ courseId: id })
+      })
+      if (data.freeEnrollment) {
+        await Promise.all([fetchUserData(), fetchUserEnrolledCourses()])
+        return
+      }
+      window.location.assign(data.sessionUrl)
+    } catch (error) {
+      alert(error.message)
+      await Promise.all([fetchUserData(), fetchUserEnrolledCourses()])
+    }
+  }
 
   const toggleSection = (index) => {
     setOpenSections((prev) => ({
@@ -39,6 +72,7 @@ const CourseDetails = () => {
     }));
   };
 
+  if (error) return <div className='min-h-screen flex items-center justify-center text-gray-600'>{error}</div>
   return courseData ? (
     <>
     <div className='flex md:flex-row flex-col-reverse gap-10 relative items-start justify-between md:px-36 px-8 md:pt-30 pt-20 text-left'>
@@ -66,7 +100,7 @@ const CourseDetails = () => {
                   <p>{courseData.enrolledStudents.length} {courseData.enrolledStudents.length > 1 ? 'students' : 'student'}</p>
                 </div>
 
-                <p className='text-sm'>Course by <span className='text-blue-600 underline'>GreatStack</span></p>
+                <p className='text-sm'>Course by <span className='text-blue-600 underline'>{courseData.educator?.name || 'Educator'}</span></p>
 
                <div className='pt-8 text-gray-800'>
                 <h2 className= 'text-xl font-semibold'>Course Structure</h2>
@@ -161,7 +195,7 @@ const CourseDetails = () => {
 
             </div>
 
-            <button className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 text-white font-medium'
+            <button onClick={enrollCourse} disabled={isAlreadyEnrolled} className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 disabled:bg-gray-400 text-white font-medium'
             >{isAlreadyEnrolled ? 'Already Enrolled' : 'Enroll Now'}</button>
 
             <div className= 'pt-6'>

@@ -1,13 +1,20 @@
-import React, { useEffect, useState } from 'react'
-import { dummyStudentEnrolled } from '../../assets/LMS_assets/assets/assets'
+import React, { useContext, useEffect, useState } from 'react'
 import Loading from '../../Components/student/Loading'
+import { AppContext } from '../../context/AppContext'
 
 const StudentsEnrolled = () => {
 
   const [enrolledStudents, setEnrolledStudents] = useState(null)
+  const { getToken, request } = useContext(AppContext)
 
   const fetchEnrolledStudents = async () => {
-    setEnrolledStudents(dummyStudentEnrolled)
+    try {
+      const token = await getToken()
+      const data = await request('/api/educator/enrolled-students', { token })
+      setEnrolledStudents(data.enrolledStudents)
+    } catch {
+      setEnrolledStudents([])
+    }
   }
 
   useEffect(() => {
@@ -35,7 +42,7 @@ const StudentsEnrolled = () => {
                   <span className="truncate">{item.student.name}</span>
                 </td>
                 <td className="px-4 py-3 truncate">{item.courseTitle}</td>
-                <td className="px-4 py-3 hidden sm:table-cell">{new Date(item.purchaseDate).toLocaleDateString()}</td>
+                <td className="px-4 py-3 hidden sm:table-cell">{new Date(item.purchaseData).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>

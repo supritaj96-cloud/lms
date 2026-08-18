@@ -1,17 +1,22 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { AppContext } from '../../context/AppContext'
-import {dummyDashboardData} from '../../assets/LMS_assets/assets/assets'
 import Loading from '../../Components/student/Loading'
 import { assets } from '../../assets/LMS_assets/assets/assets'
 
 
 const Dashboard = () => {
 
- const { currency } = useContext(AppContext)
+ const { currency, getToken, request } = useContext(AppContext)
  const [dashboardData, setDashboardData] = useState(null)
 
  const fetchDashboardData = async () => {
-  setDashboardData(dummyDashboardData)
+  try {
+    const token = await getToken()
+    const data = await request('/api/educator/dashboard', { token })
+    setDashboardData(data.dashboardData)
+  } catch {
+    setDashboardData({ totalEarnings: 0, totalCourses: 0, publishedCourses: 0, enrolledStudentsData: [] })
+  }
  }
 
  useEffect(() =>{
@@ -28,6 +33,13 @@ const Dashboard = () => {
             <div>
               <p className='text-2xl font-medium text-gray-600'>{dashboardData.enrolledStudentsData.length}</p>
               <p className='text-base text-gray-500'>Total Enrollments</p>
+            </div>
+          </div>
+          <div className='flex items-center gap-3 shadow-card border border-blue-500 p-4 w-56 rounded-md'>
+            <img src={assets.my_course_icon} alt="courses" />
+            <div>
+              <p className='text-2xl font-medium text-gray-600'>{dashboardData.publishedCourses}</p>
+              <p className='text-base text-gray-500'>Published Courses</p>
             </div>
           </div>
           <div className='flex items-center gap-3 shadow-card border border-blue-500 p-4 w-56 rounded-md'>

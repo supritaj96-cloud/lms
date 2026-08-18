@@ -1,8 +1,8 @@
 import { createContext, useEffect, useState } from "react";
-import { dummyCourses } from '../assets/LMS_assets/assets/assets'
 import { useNavigate } from "react-router-dom";
 import humanizeDuration from 'humanize-duration';
 import { useAuth, useUser } from "@clerk/clerk-react";
+import { backendUrl, request } from '../lib/api';
 
 
 export const AppContext = createContext();
@@ -17,12 +17,22 @@ export const AppContextProvider = (props)=>{
     const {user} = useUser()
 
     const[allCourses, setAllCourses] = useState([])
-    const [isEducator, setIsEducator] = useState(true) // Assuming the user is an educator for demonstration purposes
+    const [isEducator, setIsEducator] = useState(false)
     const[enrolledCourses, setEnrolledCourses] = useState([])
+    const [userData, setUserData] = useState(null)
+    const [isLoadingCourses, setIsLoadingCourses] = useState(true)
 
     //Fetch All Courses
     const fetchAllCourses = async ()=>{
-        setAllCourses(dummyCourses)
+        try {
+            setIsLoadingCourses(true)
+            const data = await request('/api/course/all')
+            setAllCourses(data.courses)
+        } catch {
+            setAllCourses([])
+        } finally {
+            setIsLoadingCourses(false)
+        }
     }
 
     //Funnction to calculate average rating of course
@@ -64,30 +74,45 @@ export const AppContextProvider = (props)=>{
 
     //Fetch User Enrolled Courses
     const fetchUserEnrolledCourses = async ()=>{
-        setEnrolledCourses(dummyCourses)
+        if (!user) {
+            setEnrolledCourses([])
+            return
+        }
+        try {
+            const token = await getToken()
+            const data = await request('/api/user/enrolled-courses', { token })
+            setEnrolledCourses(data.enrolledCourses)
+        } catch {
+            setEnrolledCourses([])
+        }
+    }
+
+    const fetchUserData = async () => {
+        if (!user) {
+            setUserData(null)
+            return
+        }
+        try {
+            const token = await getToken()
+            const data = await request('/api/user/data', { token })
+            setUserData(data.user)
+        } catch {
+            setUserData(null)
+        }
     }
 
   useEffect(()=>{
     fetchAllCourses()
-    fetchUserEnrolledCourses()
   }, [])
 
-      const logToken = async ()=>{
-        const token = await getToken();
-
-console.log("TOKEN:", token);
-console.log("USER ID:", user?.id);
-console.log("SESSION ID:", user?.lastSignInAt);
-      }
-
-  useEffect(()=>{
-    if(user){
-        logToken()
-    }
+  useEffect(() => {
+    setIsEducator(user?.publicMetadata?.role === 'educator')
+    fetchUserData()
+    fetchUserEnrolledCourses()
   }, [user])
 
     const value={
-        currency, allCourses, navigate, calculateRating, isEducator, setIsEducator, calculateChapterTime, calculateCourseDuration, calculateNoOfLectures, enrolledCourses, fetchUserEnrolledCourses,getToken, user
+        currency, allCourses, navigate, calculateRating, isEducator, setIsEducator, calculateChapterTime, calculateCourseDuration, calculateNoOfLectures, enrolledCourses, fetchUserEnrolledCourses, fetchUserData, fetchAllCourses, getToken, user, userData, isLoadingCourses, request, backendUrl
     }
 
     return (

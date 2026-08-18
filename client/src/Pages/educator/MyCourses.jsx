@@ -1,15 +1,42 @@
 import React, { useContext, useState, useEffect } from 'react'
 import { AppContext } from '../../context/AppContext'
 import Loading from '../../Components/student/Loading'
+import { Link } from 'react-router-dom'
 
 const MyCourses = () => {
 
-  const {currency, allCourses} = useContext(AppContext)
+  const {currency, getToken, request} = useContext(AppContext)
 
   const [courses, setCourses] = useState(null)
 
   const fetchEducatorCourses = async () => {
-    setCourses(allCourses)
+    try {
+      const token = await getToken()
+      const data = await request('/api/educator/courses', { token })
+      setCourses(data.courses)
+    } catch {
+      setCourses([])
+    }
+  }
+
+  const updatePublishStatus = async (course) => {
+    try {
+      const token = await getToken()
+      await request(`/api/educator/courses/${course._id}`, {
+        method: 'PUT', token,
+        body: (() => { const form = new FormData(); form.append('courseData', JSON.stringify({ isPublished: !course.isPublished })); return form })()
+      })
+      fetchEducatorCourses()
+    } catch (error) { alert(error.message) }
+  }
+
+  const removeCourse = async (course) => {
+    if (!window.confirm(`Delete “${course.courseTitle}”? Courses with enrollments cannot be deleted.`)) return
+    try {
+      const token = await getToken()
+      await request(`/api/educator/courses/${course._id}`, { method: 'DELETE', token })
+      fetchEducatorCourses()
+    } catch (error) { alert(error.message) }
   }
 
   useEffect(() =>{
@@ -28,6 +55,7 @@ const MyCourses = () => {
             <th className="px-4 py-3 font-semibold truncate">Earnings</th>
             <th className="px-4 py-3 font-semibold truncate">Students</th>
             <th className="px-4 py-3 font-semibold truncate">Published On</th>
+            <th className="px-4 py-3 font-semibold truncate">Actions</th>
 
           </tr>
           </thead>
@@ -42,6 +70,11 @@ const MyCourses = () => {
                 <td className="px-4 py-3">{course.enrolledStudents.length}</td>
                 <td className="px-4 py-3">
                   {new Date(course.createdAt).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3 whitespace-nowrap space-x-2">
+                  <Link className="text-blue-600" to={`/educator/edit-course/${course._id}`}>Edit</Link>
+                  <button className="text-blue-600" onClick={() => updatePublishStatus(course)}>{course.isPublished ? 'Unpublish' : 'Publish'}</button>
+                  <button className="text-red-600" onClick={() => removeCourse(course)}>Delete</button>
                 </td>
               </tr>
             ))}

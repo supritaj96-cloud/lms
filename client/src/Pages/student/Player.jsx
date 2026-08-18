@@ -11,7 +11,7 @@ import Rating from '../../Components/student/Rating'
 
 const Player = () => {
 
-  const{enrolledCourses, calculateChapterTime} = useContext(AppContext)
+  const{enrolledCourses, calculateChapterTime, userData, user, getToken, request, fetchUserData} = useContext(AppContext)
   const{courseId} = useParams()
   const[courseData, setCourseData] = useState(null)
   const[openSections, setOpenSections] = useState({})
@@ -24,6 +24,33 @@ const Player = () => {
         setCourseData(course)
       }
     })
+  }
+
+  const completedLectureIds = userData?.courseProgress?.find((item) => item.courseId?.toString() === courseId)?.lectureCompleted || []
+
+  const toggleCompletion = async () => {
+    if (!playerData?.lectureId) return
+    try {
+      const token = await getToken()
+      await request(`/api/user/course/${courseId}/progress`, {
+        method: 'PATCH', token,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ lectureId: playerData.lectureId, completed: !completedLectureIds.includes(playerData.lectureId) })
+      })
+      await fetchUserData()
+    } catch (error) { alert(error.message) }
+  }
+
+  const submitRating = async (rating) => {
+    try {
+      const token = await getToken()
+      await request(`/api/user/course/${courseId}/rating`, {
+        method: 'PUT', token,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rating })
+      })
+      setCourseData((current) => ({ ...current, courseRatings: [...(current.courseRatings || []).filter((item) => item.userId !== user.id), { userId: user.id, rating }] }))
+    } catch (error) { alert(error.message) }
   }
 
   const toggleSection = (index) => {
@@ -61,7 +88,7 @@ const Player = () => {
                    <ul className='list-disc md: pl-10 pl-4 pr-4 py-2 text-gray-600 border-t border-gray-300'>
                    {chapter.chapterContent.map((lecture, i)=>(
                        <li key={i} className='flex items-center gap-2 py-1'>
-                         <img src={false ? assets.blue_tick_icon : assets.play_icon} alt="play icon" className='w-4 h-4 mt-1' />
+                         <img src={completedLectureIds.includes(lecture.lectureId) ? assets.blue_tick_icon : assets.play_icon} alt="play icon" className='w-4 h-4 mt-1' />
                            <div className='flex items-center justify-between w-full text-gray-800 text-xs md:text-default'>
                              <p>{lecture.lectureTitle}</p>
                                <div className='flex gap-2'>
@@ -83,7 +110,7 @@ const Player = () => {
                       </div>
                       <div className='flex items-center gap-2 py-3 mt-10'>
                         <h1 className='text-xl font-bold'> Rate this Course:</h1>
-                        <Rating initialRating={0}/>
+                        <Rating initialRating={courseData?.courseRatings?.find((item) => item.userId === user?.id)?.rating || 0} onRate={submitRating}/>
                       </div>
                       </div>
     {/*right column */}
@@ -95,7 +122,7 @@ const Player = () => {
           <div className='flex justify-between items-center mt-1'>
             <p>{playerData.chapter}.{playerData.lecture} {playerData.lectureTitle}
               </p>
-            <button className='text-blue-600'>{false ? 'Completed' : 'Mark Complete'}
+            <button onClick={toggleCompletion} className='text-blue-600'>{completedLectureIds.includes(playerData.lectureId) ? 'Mark Incomplete' : 'Mark Complete'}
               </button>
           </div>
         </div>

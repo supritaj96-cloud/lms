@@ -6,13 +6,26 @@ import { AppContext } from '../../context/AppContext'
 
 const Navbar = () => {
 
-  const {navigate, isEducator} = useContext(AppContext)
+  const {navigate, isEducator, getToken, request, setIsEducator} = useContext(AppContext)
 
   const isCourseListPage = location.pathname.includes('/course-list');
 
   const {openSignIn} = useClerk()
   const {user} = useUser()
 
+  const openEducatorArea = async () => {
+    if (!user) return openSignIn()
+    if (isEducator) return navigate('/educator')
+    try {
+      const token = await getToken()
+      await request('/api/educator/update-role', { method: 'POST', token })
+      await user.reload()
+      setIsEducator(true)
+      navigate('/educator')
+    } catch (error) {
+      alert(error.message)
+    }
+  }
 
 
 
@@ -22,7 +35,7 @@ const Navbar = () => {
        <div className='hidden md:flex items-center gap-5 text-gray-500'>
            <div className='flex items-center gap-5'> 
                { user && <>
-                <button onClick={()=> {navigate('/educator')}}>{isEducator ? 'Educator Dashboard' : 'Become Educator'}</button>
+                <button onClick={openEducatorArea}>{isEducator ? 'Educator Dashboard' : 'Become Educator'}</button>
                 | <Link to='/my-enrollments'>My Enrollments</Link>
                 </>}
            </div>
@@ -40,7 +53,7 @@ const Navbar = () => {
            <>
 
 
-          <button onClick={()=> {navigate('/educator')}}>{isEducator ? 'Educator Dashboard' : 'Become Educator'}</button>
+          <button onClick={openEducatorArea}>{isEducator ? 'Educator Dashboard' : 'Become Educator'}</button>
 
 
 
@@ -58,7 +71,3 @@ const Navbar = () => {
 }
 
 export default Navbar
-
-
-
-
