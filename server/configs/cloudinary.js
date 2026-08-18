@@ -7,11 +7,6 @@ const connectCloudinary = async ()=>{
         api_secret: process.env.CLOUDINARY_SECRET_KEY,
     })
 
-    console.log("Cloudinary Config Check:", {
-        cloud_name: process.env.CLOUDINARY_NAME,
-        api_key: process.env.CLOUDINARY_API_KEY,
-        api_secret_length: process.env.CLOUDINARY_SECRET_KEY?.length
-    })
 }
 
 export default connectCloudinary

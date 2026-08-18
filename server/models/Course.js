@@ -19,9 +19,10 @@ const chapterSchema = new mongoose.Schema({
 const courseSchema = new mongoose.Schema({
     courseTitle: { type: String, required: true},
     courseDescription: { type: String, required: true},
+    category: { type: String, default: 'General', trim: true },
     courseThumbnail: { type: String },
     coursePrice: { type: Number, required: true },
-    isPublished: { type: Boolean, default: true },
+    isPublished: { type: Boolean, default: false },
     discount: { type: Number, required: true, min: 0, max: 100 },
     courseContent: [chapterSchema],
     courseRatings:[

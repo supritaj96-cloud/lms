@@ -10,6 +10,8 @@ import { clerkMiddleware } from '@clerk/express'
 import connectCloudinary from './configs/cloudinary.js'
 import courseRouter from './routes/courseRoute.js'
 import userRouter from './routes/userRoutes.js'
+import paymentRouter from './routes/paymentRoutes.js'
+import { stripeWebhook } from './controllers/paymentController.js'
 
 const currentDirectory = dirname(fileURLToPath(import.meta.url))
 dotenv.config({ path: join(currentDirectory, '.env') })
@@ -22,8 +24,9 @@ await connectDB()
 await connectCloudinary()
 
 // Middlewares
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',').map((origin) => origin.trim())
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: (origin, callback) => callback(null, !origin || allowedOrigins.includes(origin)),
     credentials: true
 }));
 
@@ -33,9 +36,11 @@ app.use(clerkMiddleware())
 app.get('/', (req, res) => res.send("API Working"))
 
 app.post('/clerk', express.json(),clerkWebhooks)
+app.post('/api/payment/webhook', express.raw({ type: 'application/json' }), stripeWebhook)
 app.use('/api/educator', express.json(), educatorRouter)
 app.use('/api/course', express.json(), courseRouter)
 app.use('/api/user', express.json(), userRouter)
+app.use('/api/payment', express.json(), paymentRouter)
 
 
 // Port

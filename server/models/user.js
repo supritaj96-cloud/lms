@@ -12,6 +12,18 @@ const userSchema = new mongoose.Schema(
                 ref: 'Course'
             }
         ],
+        courseProgress: [
+            {
+                courseId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'Course',
+                    required: true
+                },
+                lectureCompleted: { type: [String], default: [] },
+                completedAt: { type: Date, default: null },
+                lastAccessedAt: { type: Date, default: Date.now }
+            }
+        ]
 
     }, { timestamps: true });
 
