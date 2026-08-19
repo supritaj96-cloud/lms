@@ -66,13 +66,13 @@ const Player = () => {
   return (
 
     <>
-    <div className= 'p-4 sm:p-10 flex flex-col-reverse md:grid md:grid-cols-2 gap-10 md:px-36'>
+    <div className= 'flex flex-col-reverse gap-8 p-4 sm:p-10 md:grid md:grid-cols-2 md:px-36'>
       {/* left column */}
     <div className='text-gray-800'>
       <h2 className='text-xl font-semibold'>Course Structure</h2>
       <div className='pt-5'>
        {courseData && courseData.courseContent.map((chapter,index)=>(
-           <div key={index} className='border border-gray-300 bg-white mb-2 rounded'>
+           <div key={index} className='mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm'>
             <div className='flex items-center justify-between px-4 py-3 cursor-pointer select-none' onClick={()=> toggleSection(index)}>
             <div className='flex items-center gap-2'>
                             

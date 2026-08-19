@@ -3,6 +3,7 @@ import Course from '../models/Course.js'
 import User from '../models/user.js'
 import { Purchase } from '../models/Purchase.js'
 import { getAuth } from '@clerk/express'
+import { ensureUser } from '../utils/ensureUser.js'
 
 const getStripe = () => {
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -23,8 +24,7 @@ export const createCheckoutSession = async (req, res) => {
 
         if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
 
-        const user = await User.findById(userId)
-        if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+        const user = await ensureUser(userId)
         if (user.enrolledCourses.some((id) => id.equals(course._id))) {
             return res.status(409).json({ success: false, message: 'You are already enrolled in this course' })
         }

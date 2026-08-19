@@ -4,10 +4,10 @@ import SearchBar  from './SearchBar'
 
 const Hero = () => {
   return (
-    <div className='flex flex-col items-center justify-center w-full md:pt-36 pt-20 px-7 md:px-0 space-y-7 text-center bg-gradient-to-b from-cyan-100/70'>
+    <div className='flex min-h-[500px] flex-col items-center justify-center w-full px-7 pt-20 text-center space-y-7 bg-[radial-gradient(circle_at_top,#dbeafe_0%,#eef2ff_36%,#f5f7fb_75%)] md:pt-32 md:px-0'>
       <h1 className='relative mx-auto max-w-[700px] text-[28px] font-bold leading-[1.1] text-gray-800 sm:text-5xl md:text-[56px]'>
         Empower your future with the courses designed to
-        <span className='mt-2 block text-blue-600'>fit your choice.</span>
+        <span className='mt-2 block text-[#3159d7]'>fit your choice.</span>
         <img src={assets.sketch} alt="sketch" className='md:block hidden absolute -bottom-7 right-0'/>
       </h1>
 

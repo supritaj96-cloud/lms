@@ -331,10 +331,10 @@ const AddCourse = () => {
 
 return (
 
-<div className='h-screen overflow-scroll flex flex-col items-start justify-between md:p-8 md:pb-0 p-4 pt-8 pb-0'>
+<div className='sb-page min-h-screen overflow-y-auto p-4 pt-8 md:p-8 md:pb-12'>
 
 
-<form>
+<form className='sb-panel w-full max-w-4xl p-5 md:p-8'>
 
 <h1 className='text-xl font-semibold mb-4'>{isEditing ? 'Edit Course' : 'Add Course'}</h1>
 
@@ -353,7 +353,7 @@ type="text"
 
 placeholder='Type here'
 
-className='outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500'
+className='sb-input md:py-2.5 py-2 px-3'
 
 required
 
@@ -393,7 +393,7 @@ type="number"
 
 placeholder='0'
 
-className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500'
+className='sb-input md:py-2.5 py-2 w-28 px-3'
 
 required
 
@@ -404,7 +404,7 @@ required
 
 <div className='flex flex-col gap-1 mt-4'>
 <p>Category</p>
-<input onChange={e => setCategory(e.target.value)} value={category} type="text" placeholder="e.g. Development" className='outline-none md:py-2.5 py-2 px-3 rounded border border-gray-500' />
+<input onChange={e => setCategory(e.target.value)} value={category} type="text" placeholder="e.g. Development" className='sb-input md:py-2.5 py-2 px-3' />
 </div>
 
 
@@ -507,7 +507,7 @@ min={0}
 max={100}
 
 
-className='outline-none md:py-2.5 py-2 w-28 px-3 rounded border border-gray-500'
+className='sb-input md:py-2.5 py-2 w-28 px-3'
 
 
 />
@@ -529,7 +529,7 @@ chapters.map((chapter,chapterIndex)=>(
 
 <div key={chapter.chapterId}
 
-className="bg-white border rounded-lg mb-4">
+className="sb-panel mb-4 overflow-hidden">
 
 
 <div className="flex justify-between items-center p-4 border-b">
@@ -964,7 +964,7 @@ type="button"
 
 onClick={addCourse}
 
-className='bg-black text-white w-max py-2.5 px-8 rounded'
+className='sb-button-primary w-max px-8 py-2.5'
 
 >
 

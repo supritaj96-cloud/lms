@@ -75,7 +75,7 @@ const CourseDetails = () => {
   if (error) return <div className='min-h-screen flex items-center justify-center text-gray-600'>{error}</div>
   return courseData ? (
     <>
-    <div className='flex md:flex-row flex-col-reverse gap-10 relative items-start justify-between md:px-36 px-8 md:pt-30 pt-20 text-left'>
+    <div className='relative flex flex-col-reverse items-start justify-between gap-10 px-8 pt-16 text-left md:flex-row md:px-36 md:pt-24'>
 
       <div className= 'absolute top-0 left-0 w-full h-section-height -z-1 bg-gradient-to-b from-cyan-100/70'></div>
         
@@ -107,7 +107,7 @@ const CourseDetails = () => {
 
                 <div className='pt-5'>
                   {courseData.courseContent.map((chapter,index)=>(
-                    <div key={index} className='border border-gray-300 bg-white mb-2 rounded'>
+                    <div key={index} className='mb-3 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm'>
                       <div className='flex items-center justify-between px-4 py-3 cursor-pointer select-none' onClick={()=>toggleSection(index)}>
                         <div className='flex items-center gap-2'>
                       
@@ -151,7 +151,7 @@ const CourseDetails = () => {
         </div>
 
         {/* right column */}
-        <div className='max-w-course-card z-10 shadow-custom-card rounded-t md:rounded-none overflow-hidden bg-white min-w-[300px] sm:min-w-[420px]'>
+        <div className='sb-panel z-10 min-w-[300px] max-w-course-card overflow-hidden sm:min-w-[420px]'>
           {
              playerData ? 
                 <YouTube videoId={playerData.videoId} opts={{playerVars: { autoplay: 1 }}} iframeClassName='w-full aspect-video' />
@@ -195,7 +195,7 @@ const CourseDetails = () => {
 
             </div>
 
-            <button onClick={enrollCourse} disabled={isAlreadyEnrolled} className='md:mt-6 mt-4 w-full py-3 rounded bg-blue-600 disabled:bg-gray-400 text-white font-medium'
+            <button onClick={enrollCourse} disabled={isAlreadyEnrolled} className='sb-button-primary mt-4 w-full py-3 disabled:bg-slate-400 md:mt-6'
             >{isAlreadyEnrolled ? 'Already Enrolled' : 'Enroll Now'}</button>
 
             <div className= 'pt-6'>
@@ -204,8 +204,6 @@ const CourseDetails = () => {
                 <li>Lifetime access with free updates.</li>
                 <li>Step-by-step, hands-on project guidance.</li>
                 <li>Downloadable resources and source code.</li>
-                <li>Quizzes to test your knowledge.</li>
-                <li>Certificate of completion.</li>
               </ul>
     
             </div>

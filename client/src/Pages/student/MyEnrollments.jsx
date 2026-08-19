@@ -31,9 +31,10 @@ const MyEnrollments = () => {
   }
   return (
     <>
-    <div className='md:px-36 px-8 pt-10 '>
-      <h1 className='text-2xl font-semibold'>My Enrollments</h1>
-      <table className='md:table-auto table-fixed w-full overflow-hidden border mt-10'>
+    <div className='px-8 pt-12 md:px-36'>
+      <h1 className='text-3xl font-bold text-slate-900'>My Learning</h1>
+      <p className='mt-2 text-slate-500'>Pick up right where you left off.</p>
+      <table className='sb-table mt-8 w-full table-fixed md:table-auto'>
         <thead className='text-gray-900 border-b border-gray-500/20 text-sm text-left max-sm:hidden'>
           <tr>
             <th className='px-4 py-3 font-semibold truncate'>Course</th>

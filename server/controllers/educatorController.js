@@ -7,6 +7,19 @@ import { unlink } from 'node:fs/promises'
 
 const courseFields = ['courseTitle', 'courseDescription', 'category', 'coursePrice', 'discount', 'courseContent', 'isPublished']
 
+const sanitizeHtml = (html = '') => String(html)
+    .replace(/<\/?(script|style)[^>]*>/gi, '')
+    .replace(/\son\w+\s*=\s*(['"]).*?\1/gi, '')
+    .replace(/javascript:/gi, '')
+    .trim()
+
+const isValidUrl = (value) => {
+    try {
+        const url = new URL(value)
+        return ['http:', 'https:'].includes(url.protocol)
+    } catch { return false }
+}
+
 const normalizeCourseContent = (content = []) => content.map((chapter, chapterIndex) => ({
     chapterId: chapter.chapterId,
     chapterTitle: chapter.chapterTitle?.trim(),
@@ -26,10 +39,36 @@ const getCoursePayload = (data) => {
     courseFields.forEach((field) => {
         if (data[field] !== undefined) payload[field] = data[field]
     })
+    if (payload.courseDescription !== undefined) payload.courseDescription = sanitizeHtml(payload.courseDescription)
     if (payload.courseContent) payload.courseContent = normalizeCourseContent(payload.courseContent)
     if (payload.coursePrice !== undefined) payload.coursePrice = Number(payload.coursePrice)
     if (payload.discount !== undefined) payload.discount = Number(payload.discount)
     return payload
+}
+
+const validateCoursePayload = (payload, { requireAllFields = false } = {}) => {
+    if (requireAllFields && (!payload.courseTitle || !payload.courseDescription || payload.coursePrice === undefined || payload.discount === undefined)) {
+        throw new Error('Course title, description, price and discount are required')
+    }
+    if (payload.courseTitle !== undefined && (payload.courseTitle.trim().length < 3 || payload.courseTitle.trim().length > 160)) {
+        throw new Error('Course title must be between 3 and 160 characters')
+    }
+    if (payload.courseDescription !== undefined && payload.courseDescription.replace(/<[^>]*>/g, '').trim().length < 10) {
+        throw new Error('Course description must contain at least 10 characters')
+    }
+    if (payload.coursePrice !== undefined && (!Number.isFinite(payload.coursePrice) || payload.coursePrice < 0)) throw new Error('Course price must be a valid positive amount')
+    if (payload.discount !== undefined && (!Number.isFinite(payload.discount) || payload.discount < 0 || payload.discount > 100)) throw new Error('Discount must be between 0 and 100')
+    if (payload.courseContent !== undefined) {
+        if (!Array.isArray(payload.courseContent)) throw new Error('Course content must be a list of chapters')
+        for (const chapter of payload.courseContent) {
+            if (!chapter.chapterId || !chapter.chapterTitle || !Array.isArray(chapter.chapterContent)) throw new Error('Every chapter needs a title')
+            for (const lecture of chapter.chapterContent) {
+                if (!lecture.lectureId || !lecture.lectureTitle || !Number.isFinite(lecture.lectureDuration) || lecture.lectureDuration <= 0 || !isValidUrl(lecture.lectureUrl)) {
+                    throw new Error('Each lecture needs a title, positive duration, and valid URL')
+                }
+            }
+        }
+    }
 }
 
 const uploadThumbnail = async (file) => {
@@ -86,6 +125,7 @@ export const addCourse = async (req, res) => {
         }
 
         const parsedCourseData = getCoursePayload(JSON.parse(courseData));
+        validateCoursePayload(parsedCourseData, { requireAllFields: true })
         parsedCourseData.educator = educatorId
         parsedCourseData.courseThumbnail = await uploadThumbnail(imageFile)
         const newCourse = await Course.create(parsedCourseData)
@@ -132,6 +172,7 @@ export const updateCourse = async (req, res) => {
         const course = await Course.findOne({ _id: req.params.id, educator })
         if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
         const payload = getCoursePayload(JSON.parse(req.body.courseData || '{}'))
+        validateCoursePayload(payload)
         if (req.file) payload.courseThumbnail = await uploadThumbnail(req.file)
         Object.assign(course, payload)
         await course.save()
@@ -148,6 +189,7 @@ export const deleteCourse = async (req, res) => {
         if (!course) return res.status(404).json({ success: false, message: 'Course not found' })
         const completedPurchases = await Purchase.exists({ courseId: course._id, status: 'completed' })
         if (completedPurchases) return res.status(409).json({ success: false, message: 'Courses with enrollments cannot be deleted' })
+        await Purchase.deleteMany({ courseId: course._id, status: { $in: ['pending', 'failed'] } })
         await Course.deleteOne({ _id: course._id })
         return res.json({ success: true, message: 'Course deleted' })
     } catch (error) {

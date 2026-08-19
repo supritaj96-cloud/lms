@@ -14,6 +14,7 @@ import StudentsEnrolled from './Pages/educator/StudentsEnrolled'
 import Navbar from './Components/student/Navbar'
 import "quill/dist/quill.snow.css";
 import ProtectedRoute from './Components/ProtectedRoute'
+import ChatWidget from './Components/student/ChatWidget'
 
 
 const App = () => {
@@ -22,7 +23,7 @@ const App = () => {
 
 
   return (
-    <div className='text-default min-h-screen bg-white'>
+    <div className='text-default min-h-screen bg-[#f5f7fb]'>
       {!isEducatorRoute && <Navbar />}
       
       <Routes>
@@ -42,6 +43,7 @@ const App = () => {
         </Route>
         
       </Routes>
+      <ChatWidget />
       
     </div>
   )

@@ -2,9 +2,38 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+:root {
+  --sb-ink: #13233a;
+  --sb-muted: #64748b;
+  --sb-brand: #3159d7;
+  --sb-brand-deep: #243aa6;
+  --sb-accent: #0f9b8e;
+  --sb-surface: #ffffff;
+  --sb-border: #e4eaf2;
+  --sb-bg: #f5f7fb;
+}
+
 *{
   font-family: Outfit;
 }
+
+body { background: var(--sb-bg); color: var(--sb-ink); }
+button, a, input { -webkit-tap-highlight-color: transparent; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+
+@layer components {
+  .sb-page { @apply min-h-screen bg-[#f5f7fb] text-slate-800; }
+  .sb-panel { @apply rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]; }
+  .sb-card { @apply rounded-2xl border border-slate-200/80 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-slate-200/70; }
+  .sb-input { @apply rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-[#3159d7] focus:ring-4 focus:ring-blue-100; }
+  .sb-button-primary { @apply rounded-xl bg-[#3159d7] px-5 py-2.5 font-semibold text-white shadow-sm transition hover:bg-[#243aa6] hover:shadow-lg hover:shadow-blue-200 active:scale-[0.98] disabled:opacity-50; }
+  .sb-button-secondary { @apply rounded-xl border border-slate-200 bg-white px-5 py-2.5 font-semibold text-slate-700 transition hover:border-blue-200 hover:bg-blue-50 hover:text-[#3159d7]; }
+  .sb-table { @apply overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-[0_12px_30px_rgba(15,23,42,0.05)]; }
+}
+
+input[type="text"], input[type="number"], input[type="email"], input[type="url"] { border-radius: 0.75rem; border-color: var(--sb-border); }
+input[type="text"]:focus, input[type="number"]:focus, input[type="email"]:focus, input[type="url"]:focus { border-color: var(--sb-brand); box-shadow: 0 0 0 4px rgb(49 89 215 / 0.1); }
 
 @layer base{
   html {

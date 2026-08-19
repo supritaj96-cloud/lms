@@ -1,6 +1,7 @@
 import User from "../models/user.js"
 import { getAuth } from '@clerk/express'
 import Course from '../models/Course.js'
+import { ensureUser } from '../utils/ensureUser.js'
 
 
 // Get User Data
@@ -8,11 +9,7 @@ export const getUserData = async (req, res) => {
     try {
         const { userId } = getAuth(req)
         
-        const user = await User.findById(userId)
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User Not Found' })
-        }
+        const user = await ensureUser(userId)
 
         res.json({ success: true, user })
     } catch (error) {
@@ -24,6 +21,7 @@ export const getUserData = async (req, res) => {
 export const userEnrolledCourses = async (req, res) => {
     try {
         const { userId } = getAuth(req)
+        await ensureUser(userId)
         const userData = await User.findById(userId).populate({
             path: 'enrolledCourses',
             populate: { path: 'educator', select: 'name imageUrl' }
@@ -44,7 +42,7 @@ export const updateCourseProgress = async (req, res) => {
         const { userId } = getAuth(req)
         const { courseId } = req.params
         const { lectureId, completed } = req.body
-        const user = await User.findById(userId)
+        const user = await ensureUser(userId)
         const course = await Course.findById(courseId)
         if (!user || !course) return res.status(404).json({ success: false, message: 'User or course not found' })
         if (!user.enrolledCourses.some((id) => id.equals(course._id))) {
@@ -81,7 +79,7 @@ export const rateCourse = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Rating must be an integer from 1 to 5' })
         }
         const { userId } = getAuth(req)
-        const user = await User.findById(userId)
+        const user = await ensureUser(userId)
         const course = await Course.findById(courseId)
         if (!user || !course) return res.status(404).json({ success: false, message: 'User or course not found' })
         if (!user.enrolledCourses.some((id) => id.equals(course._id))) {

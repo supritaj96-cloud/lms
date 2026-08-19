@@ -3,6 +3,7 @@ import { assets } from '../../assets/LMS_assets/assets/assets'
 import { Link } from 'react-router-dom'
 import { useClerk, UserButton, useUser } from '@clerk/clerk-react'
 import { AppContext } from '../../context/AppContext'
+import Brand from '../Brand'
 
 const Navbar = () => {
 
@@ -30,8 +31,8 @@ const Navbar = () => {
 
 
   return (
-    <div className={`flex items-center justify-between px-4 sm:px-10 md:px-14 lg:px-36 border-b border-gray-500 py-4 ${isCourseListPage ? 'bg-white' : 'bg-cyan-100/70'}`}>
-       <img onClick={()=> navigate('/')} src={assets.logo} alt="Logo" className='w-28 lg:w-32 cursor-pointer'/>
+    <div className={`sticky top-0 z-40 flex items-center justify-between border-b border-slate-200/80 px-4 py-4 backdrop-blur-xl sm:px-10 md:px-14 lg:px-36 ${isCourseListPage ? 'bg-white/90' : 'bg-[#f5f7fb]/90'}`}>
+       <Brand />
        <div className='hidden md:flex items-center gap-5 text-gray-500'>
            <div className='flex items-center gap-5'> 
                { user && <>
@@ -41,7 +42,7 @@ const Navbar = () => {
            </div>
           {user ? <UserButton /> :
           
-            <button onClick={() => openSignIn()} className='bg-blue-600 text-white px-5 py-2 rounded-full'>Create Account</button>}
+            <button onClick={() => openSignIn()} className='sb-button-primary px-5 py-2'>Create Account</button>}
           
        </div>
 
